@@ -8,7 +8,7 @@ class EnqueueError(Exception):
 
 class PostQueue:
     '''
-    A queue that handle posts.
+    A queue to handle posts.
     '''
     def __init__(self,ratiolimit,handle):
         self.__posts = []
@@ -18,12 +18,18 @@ class PostQueue:
         self.running = False
 
     def put(self,post):
+        '''
+        Add a post at the end of the queue
+        '''
         if len(self.__posts) >= self.ratio:
             raise EnqueError('ratio limit reached')
         else:
             self.__posts.append(post)
 
     def get(self):
+        '''
+        Get the first element of the queue
+        '''
         return self.__posts.pop(0)
 
     @property
@@ -31,6 +37,9 @@ class PostQueue:
         return len(self.__posts)
 
     def start(self):
+        '''
+        Start in a new thread the post handler
+        '''
         if self.running:
             raise EnqueueError("Handle is already running")
         self.running = True
@@ -44,6 +53,14 @@ class PostQueue:
 
 class PostHandler:
     '''
+    Decorator to handle posts.
+
+    Usage:
+        >>> @PostHandler()
+        ... def handler(post):
+        ...    #do something
+        ... 
+        >>> queue = PostQueue(1,handler)
     '''
     def __init__(self):
         pass

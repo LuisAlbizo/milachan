@@ -3,7 +3,7 @@ from os import path
 
 here = path.abspath(path.dirname(__file__))
 
-with open(path.join(here, 'README.rst'),'r') as f:
+with open(path.join(here, 'README.txt'),'r') as f:
     long_description = f.read()
     f.close()
 
@@ -18,6 +18,7 @@ setup(
   url = 'https://github.com/LuisAlbizo/milachan',
   keywords = ['imageboard', 'framework', 'chan'],
   license = 'Creative Commons',
+  setup_cfg = True,
   classifiers = [
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
