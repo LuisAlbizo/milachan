@@ -10,14 +10,14 @@ with open(path.join(here, 'README.rst'),'r') as f:
 setup(
   name = 'milachan',
   packages = ['milachan'],
-  version = '0.1.0',
+  version = '0.2.0',
   description = 'A minimalistic framework for creating simple ImageBoards',
   long_description = long_description,
   author = 'Luis Albizo',
   author_email = 'albizo.luis@gmail.com',
   url = 'https://github.com/LuisAlbizo/milachan',
   keywords = ['imageboard', 'framework', 'chan'],
-  license = 'Creative Commons',
+  license = 'MIT',
   setup_cfg = True,
   classifiers = [
         'Development Status :: 3 - Alpha',

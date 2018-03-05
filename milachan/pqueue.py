@@ -22,7 +22,7 @@ class PostQueue:
         Add a post at the end of the queue
         '''
         if len(self.__posts) >= self.ratio:
-            raise EnqueError('ratio limit reached')
+            raise EnqueueError('ratio limit reached')
         else:
             self.__posts.append(post)
 
