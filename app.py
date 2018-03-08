@@ -1,9 +1,9 @@
 from flask import Flask, request, render_template
-from milachan import MongoManager
-from milachan.pqueue import PostQueue as Queue, PostHandler as Handler
+from milachan import managers
+mongom = managers.MongoManager
 
 app = Flask(__name__)
-manager = MongoManager('imageboard')
+manager = mongom.Manager('imageboard')
 
 @app.route('/')
 def index():

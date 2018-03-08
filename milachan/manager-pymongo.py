@@ -216,8 +216,12 @@ class Reply(Reply):
         self.save()
 
     def delete(self):
+        '''
+        Deletes the entire thread
+        '''
         thread = self.__db.get_collection(self.board+'.'+str(self.op))
-        thread.delete_one({'_id':self.id})
+        #thread.delete_one({'_id':self.id})
+        thread.drop()
         info = {
             'deleted' : True,
             '_id' : self.id
@@ -235,13 +239,28 @@ class Manager:
     '''
     def __init__(self,dbname,host='127.0.0.1',port=27017):
         self.__db = MongoClient(host=host, port=port).get_database(dbname)
-        self.__handlers = []
+        self.__handlers = dict()
+        self.__queues = dict()
 
-    #TODO
-    #@property
-    #def handler(self,afunc):
-    #    pass
+    def handler(self,afunc):
+        self.__handlers[afunc.__name__] = Handler()(afunc)
 
+    def add_queue(self,name,ratio,handler_name):
+        self.__queues[name] = Queue(ratio,self.__handlers[handler_name])
+
+    def start_queue(self,qname):
+        self.__queues[name].start()
+
+    def stop_queue(self,qname):
+        self.__queues[name].stop()
+
+    def start_all(self):
+        for q in self.__queues.values():
+            q.start()
+
+    def stop_all(self):
+        for q in self.__queues.values():
+            q.stop()
 
     def create_board(self,url,name,description,**kwargs):
         '''
@@ -395,4 +414,7 @@ class Manager:
             return True
         else:
             return False
+
+
+
 

@@ -6,6 +6,9 @@ import threading
 class EnqueueError(Exception):
     pass
 
+class HandleError(Exception):
+    pass
+
 class PostQueue:
     '''
     A queue to handle posts.
@@ -20,6 +23,8 @@ class PostQueue:
     def put(self,post):
         '''
         Add a post at the end of the queue
+ 
+        Raises EnqueueError
         '''
         if len(self.__posts) >= self.ratio:
             raise EnqueueError('ratio limit reached')
@@ -39,11 +44,13 @@ class PostQueue:
     def start(self):
         '''
         Start in a new thread the post handler
+        
+        Raises HandleError
         '''
         if self.running:
-            raise EnqueueError("Handle is already running")
+            raise HandleError("handler is already running")
         self.running = True
-        return threading.Thread(target=self.__handle, args=(self,), daemon=True).start()
+        threading.Thread(target=self.__handle, args=(self,), daemon=True).start()
 
     def stop(self):
         '''
@@ -53,14 +60,15 @@ class PostQueue:
 
 class PostHandler:
     '''
-    Decorator to handle posts.
+    Decorator to make post handler's.
 
     Usage:
         >>> @PostHandler()
         ... def handler(post):
-        ...    #do something
+        ...     #do something
+        ...     pass
         ... 
-        >>> queue = PostQueue(1,handler)
+        >>> queue = PostQueue(10,handler)
     '''
     def __init__(self):
         pass
