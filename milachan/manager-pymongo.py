@@ -2,7 +2,7 @@
     ImageBoard Manager for MongoDB implemented with pymongo
 '''
 
-from pymongo import MongoClient
+from pymongo import MongoClient, MongoReplicaSetClient
 from .squema import OP,Reply
 from .pqueue import PostQueue as Queue, PostHandler as Handler
 
@@ -44,14 +44,13 @@ class OP(OP):
         
         Returns a OP instance if exists
         '''
-        match = db.get_collection(board+'.'+str(_id)).find_one({'OP':True})
+        match = db.get_collection(board+'.'+str(_id)).find_one({'OP':True},{'OP':False,'time':False,'timestamp':False})
         if match:
             return OP(db,**match)
 
     def __init__(self,db,*args,**kwargs):
         super().__init__(*args,**kwargs)
         self.__db = db
-        self.update_replys()
 
     @property
     def replys(self):
@@ -90,7 +89,7 @@ class OP(OP):
 
         Return a Reply instance if the reply exists
         '''
-        match = self.__db.get_collection(self.board+'.'+str(self.id)).find_one({'_id':_id})
+        match = self.__db.get_collection(self.board+'.'+str(self.id)).find_one({'_id':_id},{'reply':False,'time':False,'timestamp':False})
         if match: 
             return Reply(db,**match)
 
@@ -170,7 +169,7 @@ class Reply(Reply):
         Returns a Reply instance if exists
         '''
         for thread in db.list_collections():
-            match = db.get_collection(thread['name']).find_one({'_id':_id,'reply':True})
+            match = db.get_collection(thread['name']).find_one({'_id':_id,'reply':True},{'reply':False,'time':False,'timestamp':False})
             if match:
                 return Reply(db,**match)
 
@@ -237,30 +236,76 @@ class Manager:
         `host`      the hostname of the mongo database (default '127.0.0.1')
         `port`      the port of the mongo database (default 27017)
     '''
-    def __init__(self,dbname,host='127.0.0.1',port=27017):
+    def __init__(self,dbname='imageboard',host='127.0.0.1',port=27017):
         self.__db = MongoClient(host=host, port=port).get_database(dbname)
         self.__handlers = dict()
         self.__queues = dict()
 
+    @property
+    def db(self):
+        return self.__db
+
     def handler(self,afunc):
+        '''
+        Decorator for post handlers.
+
+        Pass a handler function to handle posts.
+
+        Example:
+        >>> @manager.handler
+        ... def simple_handler(post):
+        ...     #do something with post
+        ... 
+        '''
         self.__handlers[afunc.__name__] = Handler()(afunc)
+        return afunc.__name__
 
     def add_queue(self,name,ratio,handler_name):
+        '''
+        Add a PostQueue.
+
+        :Parameters:
+            `name`      the name of the queue
+            `ratio`     the ratio limit of the queue
+            `handler_name`      the name of the handler function
+        '''
         self.__queues[name] = Queue(ratio,self.__handlers[handler_name])
 
-    def start_queue(self,qname):
+    def start_queue(self,name):
+        '''
+        Start a queue by name.
+        '''
         self.__queues[name].start()
 
-    def stop_queue(self,qname):
+    def stop_queue(self,name):
+        '''
+        Stop a queue by name.
+        '''
         self.__queues[name].stop()
 
     def start_all(self):
+        '''
+        Start all queue's.
+
+        Raises HandleError
+        '''
         for q in self.__queues.values():
             q.start()
 
     def stop_all(self):
+        '''
+        Stop all queue's.
+        '''
         for q in self.__queues.values():
             q.stop()
+
+    def put(self,post,qname):
+        '''
+        Put post in queue by qname.
+
+        Raises EnqueueError.
+        '''
+        self.__queues[qname].put(post)
 
     def create_board(self,url,name,description,**kwargs):
         '''
@@ -275,17 +320,21 @@ class Manager:
         Returns True if the boards not exist before, else returns False.
         '''
         if not(self.exist_board(url)):
-            board = dict(set({
-                '_id' : 0,
+            board = {
                 'board' : True,
                 'url' : url,
                 'name' : name,
                 'description' : description
-            }).union(set(kwargs)))
+            }
+            [board.update([(k,kwargs[k])]) for k in kwargs]
             self.__db.get_collection(url).insert_one(board)
+            self.__db.boards.insert_one(board)
             return True
         else:
             return False
+
+    def get_board(self,url):
+        return self.__db.get_collection(url).find_one({'board':True})
 
     def delete_board(self,url):
         '''
@@ -339,81 +388,6 @@ class Manager:
             'replys' : op.replys
         }
 
-    def post(self,ip,board,content,image=None,name='Anonymous',title=''):
-        '''
-        Creates a new thread.
-
-        :Parameters:
-            `ip`        the IP addres of the poster
-            `board`     the url of the board (the name of the collection)
-            `content`   content of the post 
-            `image`     the url of the image (optional, default None)
-            `name`      the name of the poster (optional, default is 'Anonymous')
-            'title'     a title for the post (optional, default '')
-        
-        Returns the ID of the OP
-        '''
-        op = OP(
-            self.__db, makeID(self.__db.get_collection(board)), ip, board, content, image, name,title
-        )
-        op.save()
-        return op.id
-
-    def reply(self,ip,board,op_id,content,image=None,name='Anonymous'):
-        '''
-        Replyes to a OP.
-
-        :Parameters:
-            `ip`        the IP addres of the poster
-            `board`     the url of the board (the name of the collection)
-            `op_id`     the ID of the OP
-            `content`   content of the post 
-            `image`     the url of the image (optional, default None)
-            `name`      the name of the poster (optional, default is 'Anonymous')
-
-        Returns the ID of the Reply if the OP exists, else None
-        '''
-        if not(self.exist_thread(board,op_id)):
-            return
-        reply = Reply(self.__db,_id,ip,board,op_id,content,image,name)
-        reply.save()
-        return reply.id
-
-    def delete_reply(self,board,op_id,_id):
-        '''
-        Deletes a reply.
-
-        :Parameters:
-            `board`     the shortname of the board (the name of the collection)
-            `op_id`     the id of the OP
-            `_id`       the id of the reply
-        
-        Return True if the reply exists, else False
-        '''
-        try:
-            op = OP.get(self.__db,board,op_id)
-            reply = op.get_reply(_id)
-            reply.delete()
-            return True
-        except:
-            return False
-
-    def delete_post(self,board,_id):
-        '''
-        Deletes a thread.
-
-        :Parameters:
-            `board`     the shortname of the board (the name of the collection)
-            `_id`       the id of the OP
-        
-        Return True if the OP exists, else False
-        '''
-        op = OP.get(self.__db,board,op_id)
-        if op:
-            op.delete()
-            return True
-        else:
-            return False
 
 
 

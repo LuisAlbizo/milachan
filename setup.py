@@ -10,7 +10,7 @@ with open(path.join(here, 'README.rst'),'r') as f:
 setup(
   name = 'milachan',
   packages = ['milachan'],
-  version = '0.3.0',
+  version = '0.3.1',
   description = 'A minimalistic framework for creating simple ImageBoards',
   long_description = long_description,
   author = 'Luis Albizo',

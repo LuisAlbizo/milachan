@@ -20,13 +20,17 @@ class PostQueue:
         self.__handle = handle
         self.running = False
 
+    @property
+    def size(self):
+        return len(self.__posts)
+
     def put(self,post):
         '''
         Add a post at the end of the queue
  
         Raises EnqueueError
         '''
-        if len(self.__posts) >= self.ratio:
+        if self.size >= self.ratio:
             raise EnqueueError('ratio limit reached')
         else:
             self.__posts.append(post)
@@ -36,10 +40,6 @@ class PostQueue:
         Get the first element of the queue
         '''
         return self.__posts.pop(0)
-
-    @property
-    def size(self):
-        return len(self.__posts)
 
     def start(self):
         '''

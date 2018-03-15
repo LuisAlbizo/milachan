@@ -1,0 +1,64 @@
+a {
+	color: #971AE5;
+}
+
+body {
+	background-color: #F48BCE;
+	color: #fff;
+}
+
+hr {
+	background-color: rgba(250,0,200,1);
+	color: rgba(250,0,200,0.1);
+	width: 95%;
+	margin: 8px auto;
+}
+
+input {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background-color: rgba(0,0,0,0)
+}
+
+.form-control, .input-group, .form-group {
+	margin: 0 0;
+	margin: 0 0;
+	border: 0;
+	border-radius: 0px;
+	background-color: rgba(0,0,0,0)
+}
+
+.input-group-addon {
+	background-color: #556689;
+	color: #fff;
+	border: 0;
+	/*width: 30%;*/
+}
+
+#boton {
+	background-color: #fff;
+	color: #200;
+}
+
+#boton:hover {
+	background-color: #100;
+	color: #a88;
+}
+
+#post-form {
+	width: 50%;
+	margin: auto;
+}
+
+input:-moz-placeholder {
+	color: #fff;
+}
+
+@media (max-width: 720px) {
+	#post-form {
+		width: 100%;
+	}
+
+}
+
