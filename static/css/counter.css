@@ -1,26 +1,18 @@
 a {
 	/*color: linear-gradient(90deg, #971AE5, #580D87);*/
-  	color: #971AE5;
+  	color: #009;
 }
 
 body {
-	/*background-color: #F48BCE;*/
-	color: #fff;
-  	background: linear-gradient(270deg, #6feae6, #f6a3ef);
-	background-size: 400% 400%;
+	color: #000;
+  	background-image: url("/static/images/counter.gif") ;
+	background-size: 200px 200px;
+	background-color: rgba(0,0,0,0.1);
 	animation: Backgroundgradient 128s ease infinite;
 }
 
-h4 {
-	background-color: rgba(100,230,250,0.2);
-	border-radius: 5px;
-	display: inline-block;
-	padding: 3px;
-}
-
 hr {
-	background-color: rgba(250,0,200,1);
-	color: rgba(250,0,200,0.1);
+	background-color: #fff;
 	width: 95%;
 	margin: 8px auto;
 }
@@ -29,7 +21,6 @@ input {
 	margin: 0;
 	padding: 0;
 	border: 0;
-	background-color: rgba(0,0,0,0)
 }
 
 .form-control, .input-group, .form-group {
@@ -41,14 +32,16 @@ input {
 }
 
 .input-group-addon {
-	background-color: #556689;
+	background-color: #88aad9;
 	color: #fff;
 	border: 0;
 	/*width: 30%;*/
 }
 
-.info {
-
+.thread {
+	background-color: rgba(0,0,0,0.4);
+	border-radius: 5px;
+	padding: 12px;
 }
 
 #boton {
@@ -90,6 +83,6 @@ input:-moz-placeholder {
 		background-position: 0% 50%;
 	}
 	
-	perspective: 300px;
+	perspective: 80px;
 }
 

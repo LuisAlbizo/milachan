@@ -11,13 +11,6 @@ body {
 	animation: Backgroundgradient 128s ease infinite;
 }
 
-h4 {
-	background-color: rgba(100,230,250,0.2);
-	border-radius: 5px;
-	display: inline-block;
-	padding: 3px;
-}
-
 hr {
 	background-color: rgba(250,0,200,1);
 	color: rgba(250,0,200,0.1);
@@ -45,10 +38,6 @@ input {
 	color: #fff;
 	border: 0;
 	/*width: 30%;*/
-}
-
-.info {
-
 }
 
 #boton {

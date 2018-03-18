@@ -1,15 +1,19 @@
 $(document).ready(function(){
+    	elements = document.getElementsByClassName('image');
+	for (var i = 0; i < elements.length; i++) {
+		$.notify(size(elements[i]),'info');
+	}
 	function ajax_post() {
 		$.ajax({
 			url:"/"+board+"/post",
-			//data:$("#post-form").serialize(),
 			type:"POST",
-			data:new FormData($("#post-form")[0]),
-			contentType:false,
-			processData:false,
+			data: new FormData($("#post-form")[0]),
+			processData: false,
+			contentType: false,
+			enctype: "multipart/form-data",
 			success:function(response){
 				if (response.error){
-					$.notify('Queue is full','warn');
+					$.notify(response.type,'warn');
 				}
 				else {
 					$.notify('Post enqueued','info');
@@ -21,9 +25,18 @@ $(document).ready(function(){
 		});
 	}
 
+	var uploading = false;
+
 	$("#post-form").submit(function(event){
-		event.preventDefault();
-		ajax_post();
+		if (!uploading) {
+			uploading = true;
+			event.preventDefault();
+			ajax_post();
+			document.forms["post-form"].reset();
+			uploading = false;
+		} else {
+			$.notify("Already uploading","warn");
+		}
 	});
 
 	var socket = io.connect('http://' + document.domain + ':' + location.port + '/boarding');
@@ -31,7 +44,7 @@ $(document).ready(function(){
 	socket.on('newPost',function(post){
 		if (post.status){
 			if (sha_id == post.data.ip){
-				$.notify('Post uploaded','success');
+				$.notify('Post uploaded3','success');
 			}
 			else {
 				$.notify('New post:'+post.data._id,'info');

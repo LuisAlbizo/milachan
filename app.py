@@ -1,23 +1,34 @@
 from flask import Flask, request, render_template, send_file, jsonify
-import time
+import time, gevent, os
 from hashlib import sha256 as sha
-import gevent
 from gevent import Greenlet
 from flask_wtf import CSRFProtect
 from flask_socketio import SocketIO, emit, send
+from werkzeug.utils import secure_filename
 from milachan import managers
-
 mongom = managers.MongoManager
+
+#Declarations
+
+manager = mongom.Manager('imageboard') #IB Manager
+#   App
 app = Flask(__name__)
 app.secret_key = 'milachan'
 csrf = CSRFProtect(app)
-manager = mongom.Manager('imageboard')
-io = SocketIO(app)
+UPLOAD_FOLDER = 'static/images/res/'
+ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif','webm'])
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 8 * 1024 * 1024
+#   SocketIO
+io = SocketIO(app,async_mode='gevent')
 
 #Helpers
 
 def ip_to_sha(ip):
     return sha(ip.encode()).hexdigest()
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS 
 
 #Handlers 
 
@@ -70,7 +81,7 @@ def simplehandler(post):
     elif post['request'] == 'UpdateReply':
         pass
 
-manager.add_queue('cola',2,simplehandler)
+manager.add_queue('cola',20,simplehandler)
 manager.start_all()
 
 #Routes
@@ -97,8 +108,13 @@ def thread(board,tid):
 @app.route('/<boardname>/')
 def board(boardname):
     if manager.exist_board(boardname):
-        visibles = ' / '.join(['<a href="/%s/">%s</a>' % (b['url'],b['url']) 
-            for b in manager.db.boards.find({'visible':True})])
+        visibles=' / '.join(
+            ['<a href="/%s/">%s<span class="badge" id="%s"></span></a>' % (
+                    b['url'],b['url'],b['url']
+                )
+            for b in manager.db.boards.find({'visible':True})
+            ]
+        )
         board = manager.get_board(boardname)
         board_col = eval('manager.db.'+boardname)
         q = board_col.find_one({'queue':True},{'list':True})
@@ -121,22 +137,46 @@ def board(boardname):
 @app.route('/<board>/post', methods=['POST'])
 def post(board):
     data = request.form.to_dict()
-    print(data)
-    print(request.form)
     data.pop ('csrf_token')
     data ['ip'] = request.remote_addr
     data ['board'] = board
-    try:
-        manager.put({'data':data,'request':'OP'},'cola')
-        resp = {'error':False}
-    except:
-        resp = {'error':True}
+    if 'image' not in request.files:
+        resp = {'error':True,'type':'No file part'}
+        return jsonify(resp)
+    file = request.files['image']
+    if file.filename == '':
+        resp = {'error':True,'type':'No selected file'}
+        return jsonify(resp)
+    if allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        ext = '.'+filename.split('.')[-1]
+        img_id = mongom.makeID(manager.db.images)
+        fileurl = str(img_id)+ext
+        file.save(app.config['UPLOAD_FOLDER']+fileurl)
+        data ['image'] = {
+            'url':'/static/images/res/'+fileurl,
+            'name':filename,
+            'size':os.stat(app.config['UPLOAD_FOLDER']+fileurl).st_size
+        }
+        try:
+            manager.put({'data':data,'request':'OP'},'cola')
+            resp = {'error':False}
+        except:
+            resp = {'error':True,'type':'Queue is full'}
+    else:
+        resp = {'error':True,'type':'Not admited file'}
     return jsonify(resp)
 
 #WebSockets
 def post_notify(post):
     post = post
 
+manager.create_board('shit','Shit','Shitpost and Testing',nsfw=True,visible=True)
+manager.create_board('a','Alpha','Testing',nsfw=True,visible=True)
+manager.create_board('b','Beta','Testing',nsfw=True,visible=True)
+manager.create_board('c','Charlie','Testing',nsfw=True,visible=True)
+manager.create_board('test','Test','Helli',nsfw=False,visible=False)
+
 if __name__ == '__main__':
-    io.run(app,host='0.0.0.0',port=5000)
+    io.run(app,host='127.0.0.1',port=5000)
 

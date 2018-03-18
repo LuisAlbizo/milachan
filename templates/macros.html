@@ -1,33 +1,35 @@
-{% macro render_field(field) %}
-	{{ field(**kwargs) }}
-	<ul id="errors-{{field.name}}">
-	{% for error in field.errors %}
-		<li class="error">{{error}}</li>
-	{% endfor %}
-	</ul>
-{% endmacro %}
-
-{% macro preview_threads(OP) %}
-	<article class="row">
-		<div class="op col-xs-12">
-			<h3>{{ op[''] }}<h3>
+{% macro render_preview_thread(post) %}
+	<article class="thread">
+		<div class="OP">
+			<a href="{{ post.image['url'] }}">{{ post.image['url'].split('/')[-1] }}</a>
+			<small>( {{ '%.2f MB' % (post.image['size']/(2**20))}}, {{ post.image['name'] }} )</small>
+		<img src="{{ post.image['url'] }}"
+		class="image img-responsive col-xs-8 col-xs-offset-2 col-sm-4"></img>
+			<div class="clearfix visble-sm-block"></div>
+			<br>
+			<p class="lead info col-xs-12">	
+			<h4 class="title">{{ post.title }}</h4>
+			<span class="posterName">{{post.name}}</span>
+				<a href="/thread/{{post.board}}/{{ post.id }}">
+				#{{ post.id }}
+				</a>
+				<span class="timestamp">{{ timestamp(post.timestamp) }}</span>
+			</p>
+			<p class="content">{{ post.content }}</p>
 		</div>
-
 	</article>
-{% endmacro %}
-
-{% macro render_thread(OP) %}
-	<section class="container">
-
-
-	</article>
+	<hr/>
 {% endmacro %}
 
 
-{% macro render_post_preview(OP) %}
-	<article class="row">
+{% macro render_reply() %}
 
-	</article>
+
 {% endmacro %}
+
+{% macro timestamp(dt) %}
+	{{ "%i:%i:%i - %i/%i/%i" % (dt.tm_hour,dt.tm_min,dt.tm_sec,dt.tm_mday,dt.tm_mon,dt.tm_year) }}
+{% endmacro %}
+
 
 

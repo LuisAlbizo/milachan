@@ -10,10 +10,15 @@
 	<script>
 		var board = "{{ board['url'] }}";
 		var sha_id = "{{ sha }}";
+		var size = function(img) {
+			var x = img.naturalHeight;
+			var y = img.naturalWidth;
+			return x+' x '+y;
+		};
 	</script>
-	<script src="/static/js/socket.io.min.js"></script>
 	<script src="/static/js/board.js"></script>
 	<script src="/static/js/notify.min.js"></script>
+	<script src="/static/js/socket.io.min.js"></script>
 {% endblock %}
 
 {% block content %}
@@ -30,8 +35,8 @@
 	
 	<hr/>
 
-	<section class="container-fluid">
-		<form method="POST" action="/{{ board['url'] }}/post" class="form-horizontal" id="post-form">
+	<section class="container-fluid formulario">
+		<form class="form-horizontal" id="post-form" enctype="multipart/form-data">
 			<input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
 
 			<div class="form-group">
@@ -61,30 +66,17 @@
 				</div>
 			</div>
 
-			<input type="file" name="image"/>
+			<input class="form-control" name="image" type="file" />
 		</form>
 	</section>
 
 	<hr/>
 
 	<section class="container">
+		{% from 'macros.html' import render_preview_thread %}
 		{% for id in q %}
 		{% set post = OP.get(db,board["url"],id) %}
-			<article class="thread">
-				<div class="OP">
-					<h3>{{ post.title }}</h3>
-					<p class="lead">{{post.name}}
-						<a href="/thread/{{post.board}}/{{ post.id }}">
-						#{{ post.id }}
-						</a>
-					</p>
-					<p>{{ post.content }}</p>
-					<img src="{{ post.image }}"></img>
-					<small>{{ post.image }}</small>
-				</div>
-
-			</article>
-		<hr/>
+			{{ render_preview_thread(post) }}
 		{% endfor %}
 	</section>
 
