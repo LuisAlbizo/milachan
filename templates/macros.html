@@ -2,12 +2,11 @@
 	<article class="thread">
 		<div class="OP">
 			<a href="{{ post.image['url'] }}">{{ post.image['url'].split('/')[-1] }}</a>
-			<small>( {{ '%.2f MB' % (post.image['size']/(2**20))}}, {{ post.image['name'] }} )</small>
-		<img src="{{ post.image['url'] }}"
-		class="image img-responsive col-xs-8 col-xs-offset-2 col-sm-4"></img>
-			<div class="clearfix visble-sm-block"></div>
-			<br>
-			<p class="lead info col-xs-12">	
+<small>( {% if post.image['size'] < (2**20) %}{{ '%.2f KB' % (post.image['size']/(2**10))}}{% else %} {{ '%.2f MB' % (post.image['size']/(2**20))}} {% endif %}, {{ post.image['name'] }} )</small>
+		<br>
+		<img src="{{ post.image['url'] }}" class="image"></img>
+		<!-- img-responsive col-xs-8 col-xs-offset-2 col-sm-4 -->
+			<p class="lead info col-xs-12">
 			<h4 class="title">{{ post.title }}</h4>
 			<span class="posterName">{{post.name}}</span>
 				<a href="/thread/{{post.board}}/{{ post.id }}">

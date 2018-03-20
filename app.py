@@ -66,9 +66,10 @@ def simplehandler(post):
             response = {'status':True}
         else:
             response = {'status':False}
-        response ['data'] = data
+        response ['data'] = op.info
         response ['type'] = post['request']
         response ['data'] ['ip'] = ip_to_sha(data['ip'])
+        print(response)
         io.emit('newPost',response,namespace='/boarding')
     elif post['request'] == 'Reply':
         pass
@@ -178,5 +179,5 @@ manager.create_board('c','Charlie','Testing',nsfw=True,visible=True)
 manager.create_board('test','Test','Helli',nsfw=False,visible=False)
 
 if __name__ == '__main__':
-    io.run(app,host='127.0.0.1',port=5000)
+    io.run(app,host='0.0.0.0',port=5000)
 

@@ -11,16 +11,23 @@ body {
 	animation: Backgroundgradient 128s ease infinite;
 }
 
+footer {
+	padding: 10px;
+	background-color: rgba(254,149,216,0.5);
+	color: #123;
+	font-size: 16px;
+}
+
 h4 {
-	background-color: rgba(100,230,250,0.2);
+	background-color: rgba(244,139,206,0.5);
 	border-radius: 5px;
 	display: inline-block;
 	padding: 3px;
 }
 
 hr {
-	background-color: rgba(250,0,200,1);
-	color: rgba(250,0,200,0.1);
+	border-color: rgba(244,139,206,0.5);
+	display: block;
 	width: 95%;
 	margin: 8px auto;
 }
@@ -30,6 +37,10 @@ input {
 	padding: 0;
 	border: 0;
 	background-color: rgba(0,0,0,0)
+}
+
+.boards {
+	font-size:17px;
 }
 
 .form-control, .input-group, .form-group {
@@ -48,7 +59,13 @@ input {
 }
 
 .info {
+	display: inline-block;
+	float: left;
+}
 
+.image {
+	display: inline-block;
+	max-width: 200px;
 }
 
 #boton {
@@ -62,7 +79,7 @@ input {
 }
 
 #post-form {
-	width: 50%;
+	width: 60%;
 	margin: auto;
 }
 
@@ -73,6 +90,13 @@ input:-moz-placeholder {
 @media (max-width: 720px) {
 	#post-form {
 		width: 100%;
+	}
+
+	.image {
+		display: block;
+		max-width: 200px;
+		margin-left: auto;
+		margin-right: auto;
 	}
 
 }

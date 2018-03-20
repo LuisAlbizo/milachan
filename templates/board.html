@@ -17,7 +17,7 @@
 		};
 	</script>
 	<script src="/static/js/board.js"></script>
-	<script src="/static/js/notify.min.js"></script>
+	<script src="/static/js/bootstrap-notify.min.js"></script>
 	<script src="/static/js/socket.io.min.js"></script>
 {% endblock %}
 
@@ -80,8 +80,11 @@
 		{% endfor %}
 	</section>
 
-	<footer>
+{% endblock %}
 
-	</footer>
+{% block footer %}
+	<div class="container-fluid">
+		<small class="footer"><a href="/">MilaChan</a> (MIT) Luis Albizo 2018 </small>
+	</div>
 {% endblock %}
 
