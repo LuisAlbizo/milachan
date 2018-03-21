@@ -1,9 +1,8 @@
 from flask import Flask, request, render_template, send_file, jsonify
-import time, gevent, os
+import time, gevent, os, itsdangerous as itsd
 from hashlib import sha256 as sha
 from gevent import Greenlet
 from flask_wtf import CSRFProtect
-from flask_socketio import SocketIO, emit, send
 from werkzeug.utils import secure_filename
 from milachan import managers
 mongom = managers.MongoManager
@@ -19,8 +18,6 @@ UPLOAD_FOLDER = 'static/images/res/'
 ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif','webm'])
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 8 * 1024 * 1024
-#   SocketIO
-io = SocketIO(app,async_mode='gevent')
 
 #Helpers
 

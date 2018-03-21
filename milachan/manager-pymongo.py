@@ -151,6 +151,7 @@ class Reply(Reply):
             `content`   content of the post 
             `image`     the url of the image (optional, default None)
             `name`      the name of the poster (optional, default is 'Anonymous')
+            `option`    an extra option option (optional, default None)
     '''
     def __init__(self,db,*args,**kwargs):
         super().__init__(*args,**kwargs)
@@ -387,8 +388,6 @@ class Manager:
             'replys_id' : op.replys_id,
             'replys' : op.replys
         }
-
-
 
 
 

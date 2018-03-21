@@ -11,13 +11,14 @@ class NoImplementedError(Exception):
 class Post:
     '''The base class for posts.
     '''
-    def __init__(self,_id,ip,board,content,image=None,name='Anonymous'):
+    def __init__(self,_id,ip,board,content,image=None,name='Anonymous',option=None):
         self.__id = _id
         self.__ip = ip
         self.__board = board
         self.__time = int(time.time())
         self.__timestamp = time.localtime()
         self.content = content
+        self.option = option
         self.image = image
         self.__name = name
 
@@ -60,8 +61,8 @@ class Post:
 class OP(Post):
     '''Original Poster class class..
     '''
-    def __init__(self,_id,ip,board,content,image=None,name='Anonymous',title=''):
-        super().__init__(_id,ip,board,content,image,name)
+    def __init__(self,_id,ip,board,content,image=None,name='Anonymous',title='',option=None):
+        super().__init__(_id,ip,board,content,image,name,option)
         self.title=title
         self.__replys = []
 
@@ -72,8 +73,8 @@ class OP(Post):
 class Reply(Post):
     '''Reply class
     '''
-    def __init__(self,_id,ip,board,op_id,content,image=None,name='Anonymous'):
-        super().__init__(_id,ip,board,content,image,name)
+    def __init__(self,_id,ip,board,op_id,content,image=None,name='Anonymous',option=None):
+        super().__init__(_id,ip,board,content,image,name,option)
         self.__op = op_id
 
     @property
