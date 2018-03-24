@@ -1,7 +1,6 @@
-from flask import Flask, request, render_template, send_file, jsonify
-import time, gevent, os, itsdangerous as itsd
+from flask import Flask, request, render_template, send_file, jsonify, redirect
+import time, os, re, itsdangerous as itsd
 from hashlib import sha256 as sha
-from gevent import Greenlet
 from flask_wtf import CSRFProtect
 from werkzeug.utils import secure_filename
 from milachan import managers
@@ -30,44 +29,38 @@ def allowed_file(filename):
 #Handlers 
 
 def filter(message):
-    return len(message)<512 and 'laim' not in message.lower()
+    return len(message)<1024
+
+def transform(message):
+    return 
 
 @manager.handler
 def simplehandler(post):
     data = post['data']
-    gevent.sleep(2)
     board = eval('manager.db.'+data['board'])
-    g = Greenlet(board.find_one,{'queue':True},{'list':True})
-    g.start()
-    q = g.get()
+    q = board.find_one({'queue':True},{'list':True})
     if not(q):
         q=[]
     else:
         q=q['list']
     if post['request'] == 'OP':
-        g = Greenlet(mongom.makeID,board)
-        g.start()
         op = mongom.OP(
             manager.db,
-            _id=g.get(),
+            _id=mongom.makeID(board),
             **data
         )
         if filter(op.content):
-            g = gevent.spawn(op.save)
-            g.start()
-            g.get()
+            op.save()
             q.insert(0,op.id)
-            g = gevent.spawn(board.find_one_and_update,{'queue':True},{'$set':{'list':q}},upsert=True)
-            g.start()
-            g.get()
+            board.find_one_and_update({'queue':True},{'$set':{'list':q}},upsert=True)
+        '''
             response = {'status':True}
         else:
             response = {'status':False}
         response ['data'] = op.info
         response ['type'] = post['request']
         response ['data'] ['ip'] = ip_to_sha(data['ip'])
-        print(response)
-        io.emit('newPost',response,namespace='/boarding')
+        '''
     elif post['request'] == 'Reply':
         pass
     elif post['request'] == 'DeleteOP':
@@ -107,8 +100,8 @@ def thread(board,tid):
 def board(boardname):
     if manager.exist_board(boardname):
         visibles=' / '.join(
-            ['<a href="/%s/">%s<span class="badge" id="%s"></span></a>' % (
-                    b['url'],b['url'],b['url']
+            ['<a href="/%s/">%s</a>' % (
+                    b['url'],b['url']
                 )
             for b in manager.db.boards.find({'visible':True})
             ]
@@ -140,17 +133,16 @@ def post(board):
     data ['board'] = board
     if 'image' not in request.files:
         resp = {'error':True,'type':'No file part'}
-        return jsonify(resp)
-    file = request.files['image']
-    if file.filename == '':
+        return render_template('post_error.html',response = resp, board = board)
+    image = request.files['image']
+    if image.filename == '':
         resp = {'error':True,'type':'No selected file'}
-        return jsonify(resp)
-    if allowed_file(file.filename):
-        filename = secure_filename(file.filename)
+    elif allowed_file(image.filename):
+        filename = secure_filename(image.filename)
         ext = '.'+filename.split('.')[-1]
         img_id = mongom.makeID(manager.db.images)
         fileurl = str(img_id)+ext
-        file.save(app.config['UPLOAD_FOLDER']+fileurl)
+        image.save(app.config['UPLOAD_FOLDER']+fileurl)
         data ['image'] = {
             'url':'/static/images/res/'+fileurl,
             'name':filename,
@@ -160,14 +152,13 @@ def post(board):
             manager.put({'data':data,'request':'OP'},'cola')
             resp = {'error':False}
         except:
+            os.system('rm '+app.config['UPLOAD_FOLDER']+fileurl)
             resp = {'error':True,'type':'Queue is full'}
     else:
         resp = {'error':True,'type':'Not admited file'}
-    return jsonify(resp)
-
-#WebSockets
-def post_notify(post):
-    post = post
+    if resp['error']:
+        return render_template('post_error.html',response = resp, board = board)
+    return redirect('/'+board)
 
 manager.create_board('shit','Shit','Shitpost and Testing',nsfw=True,visible=True)
 manager.create_board('a','Alpha','Testing',nsfw=True,visible=True)
@@ -176,5 +167,5 @@ manager.create_board('c','Charlie','Testing',nsfw=True,visible=True)
 manager.create_board('test','Test','Helli',nsfw=False,visible=False)
 
 if __name__ == '__main__':
-    io.run(app,host='0.0.0.0',port=5000)
+    app.run(host='0.0.0.0',port=5000)
 

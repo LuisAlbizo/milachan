@@ -34,9 +34,8 @@
 	<hr/>
 
 	<section class="container-fluid formulario">
-		<form class="form-horizontal" id="post-form" enctype="multipart/form-data">
-			
-			
+		<form action="/{{ board['url'] }}/post" method="POST" class="form-horizontal" id="post-form" enctype="multipart/form-data">
+			<input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
 			<div class="form-group">
 				<div class="input-group">
 				<label for="name" class="sr-only">Name: </label>

@@ -12,42 +12,43 @@ class Post:
     '''The base class for posts.
     '''
     def __init__(self,_id,ip,board,content,image=None,name='Anonymous',option=None):
-        self.__id = _id
-        self.__ip = ip
-        self.__board = board
-        self.__time = int(time.time())
-        self.__timestamp = time.localtime()
+        self._id = _id
+        self._ip = ip
+        self._board = board
+        self._time = int(time.time())
+        self._timestamp = time.localtime()
         self.content = content
         self.option = option
         self.image = image
-        self.__name = name
+        self._name = name
 
     @property
     def id(self):
-        return self.__id
+        return self._id
 
     @property
     def ip(self):
-        return self.__ip
+        return self._ip
 
     @property
     def time(self):
-        return self.__time
+        return self._time
 
     @property
     def timestamp(self):
-        return self.__timestamp
+        return self._timestamp
 
     @property
     def name(self):
-        return self.__name
+        return self._name
 
     @property
     def board(self):
-        return self.__board
+        return self._board
 
     def update_time(self):
-        self.__timestamp = time.localtime()
+        self._timestamp = time.localtime()
+        self._time = int(time.time())
     
     def move(self):
         raise NoImplementedError('You must to implement your own way to move posts')
@@ -56,7 +57,7 @@ class Post:
         raise NoImplementedError('You must to implement your own way to save posts')
 
     def delete(self):
-        raise NoImplementedError('You must to implement your own way to move posts')
+        raise NoImplementedError('You must to implement your own way to delete posts')
 
 class OP(Post):
     '''Original Poster class class..
@@ -64,20 +65,20 @@ class OP(Post):
     def __init__(self,_id,ip,board,content,image=None,name='Anonymous',title='',option=None):
         super().__init__(_id,ip,board,content,image,name,option)
         self.title=title
-        self.__replys = []
+        self._replys = []
 
     @property
     def replys(self):
-        return self.__replys
+        return self._replys
 
 class Reply(Post):
     '''Reply class
     '''
     def __init__(self,_id,ip,board,op_id,content,image=None,name='Anonymous',option=None):
         super().__init__(_id,ip,board,content,image,name,option)
-        self.__op = op_id
+        self._op = op_id
 
     @property
     def op(self):
-        return self.__op
+        return self._op
 

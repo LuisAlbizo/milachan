@@ -44,24 +44,24 @@ class OP(OP):
         
         Returns a OP instance if exists
         '''
-        match = db.get_collection(board+'.'+str(_id)).find_one({'OP':True},{'OP':False,'time':False,'timestamp':False})
-        if match:
-            return OP(db,**match)
+        op = OP(db,_id,'',board,'')
+        if op.load():
+            return op
 
     def __init__(self,db,*args,**kwargs):
         super().__init__(*args,**kwargs)
-        self.__db = db
+        self._db = db
 
     @property
     def replys(self):
-        thread = self.__db.get_collection(self.board+'.'+str(self.id))
+        thread = self._db.get_collection(self.board+'.'+str(self.id))
         for r in thread.find({'reply':True},{'_id':True}):
             yield self.get_reply(r['_id'])
 
     @property
     def replys_id(self):
         return [r['_id'] for r in
-                self.__db.get_collection(self.board+'.'+str(self.id)).find(
+                self._db.get_collection(self.board+'.'+str(self.id)).find(
                     {'reply':True},{'_id':True})]
     
     @property
@@ -89,15 +89,17 @@ class OP(OP):
 
         Return a Reply instance if the reply exists
         '''
-        match = self.__db.get_collection(self.board+'.'+str(self.id)).find_one({'_id':_id},{'reply':False,'time':False,'timestamp':False})
-        if match: 
-            return Reply(db,**match)
+        match = self._db.get_collection(self.board+'.'+str(self.id)).find_one({'_id':_id},{'reply':False,'time':False,'timestamp':False})
+        if match:
+            match ['op_id'] = match ['op']
+            match.pop('op')
+            return Reply(self._db,**match)
 
     def save(self):
         '''
         Insert or update if exists in database
         '''
-        thread = self.__db.get_collection(self.board+'.'+str(self.id))
+        thread = self._db.get_collection(self.board+'.'+str(self.id))
         thread.find_one_and_update({'_id':self.id}, {'$set':self.info}, upsert=True)
     
     def move(self,board,new_id,map_id):
@@ -119,11 +121,11 @@ class OP(OP):
             'new_board' : board,
             'new_id' : new_id
         }
-        self.__db.get_collection(self.board).insert_one(info)
-        self.__board = board
-        self.__id = new_id
+        self._db.get_collection(self.board).insert_one(info)
+        self._board = board
+        self._id = new_id
         for reply in replys:
-            reply[0].move(board=self.board,op=self.id,new_id=reply[1])
+            reply[0].move(board=self.board,op_id=self.id,new_id=reply[1])
         self.save()
         return self.id
 
@@ -131,12 +133,25 @@ class OP(OP):
         '''
         Delete the post with all his replys
         '''
-        self.__db.get_collection(self.board+'.'+str(self.id)).drop()
-        info = {
-            'deleted' : True,
-            '_id' : self.id
-        }
-        self.__db.get_collection(self.board).insert_one(info)
+        self._db.get_collection(self.board+'.'+str(self.id)).drop()
+
+    def load(self):
+        '''
+        Update the instance attributes according to the database
+        '''
+        match = self._db.get_collection(self.board+'.'+str(self._id)).find_one({'OP':True})
+        if match:
+            self._id = match['_id']
+            self._ip = match['ip']
+            self._board = match['board']
+            self._time = match ['time']
+            self.title = match.get('title',None)
+            self._timestamp = match['timestamp']
+            self.content = match.get('content',None)
+            self.image  = match.get('image',None)
+            self._name = match.get('name','Anonymous')
+            self.option = match.get('option',None)
+            return True
 
 class Reply(Reply):
     '''
@@ -155,7 +170,7 @@ class Reply(Reply):
     '''
     def __init__(self,db,*args,**kwargs):
         super().__init__(*args,**kwargs)
-        self.__db=db
+        self._db=db
 
     def get(db,board,_id):
         '''
@@ -169,23 +184,26 @@ class Reply(Reply):
         
         Returns a Reply instance if exists
         '''
-        for thread in db.list_collections():
-            match = db.get_collection(thread['name']).find_one({'_id':_id,'reply':True},{'reply':False,'time':False,'timestamp':False})
+        for thread in filter(lambda x: x.split('.',1)[0]==board,db.collection_names()):
+            match = db.get_collection(thread).find_one({'_id':_id,'reply':True},{'_id':True,'board':True})
             if match:
-                return Reply(db,**match)
+                with Reply(db,match['_id'],'',match['board'],'','') as reply:
+                    reply.load()
+                    return reply
 
     @property
     def info(self):
         info = {
-            'reply' : True,
-            '_id' : self.id,
-            'ip' : self.ip,
-            'time' : self.time,
-            'timestamp' : self.timestamp,
-            'board' : self.board,
-            'op' : self.op.id,
-            'content' : self.content,
-            'name' : self.name
+            'reply'     :   True,
+            '_id'       :   self.id,
+            'ip'        :   self.ip,
+            'time'      :   self.time,
+            'timestamp' :   self.timestamp,
+            'board'     :   self.board,
+            'op'        :   self.op,
+            'content'   :   self.content,
+            'name'      :   self.name,
+            'option'    :   self.option
         }
         if self.image:
             info['image'] = self.image
@@ -195,7 +213,7 @@ class Reply(Reply):
         '''
         Insert or update if exists in database
         '''
-        thread = self.__db.get_collection(self.board+'.'+str(self.op))
+        thread = self._db.get_collection(self.board+'.'+str(self.op))
         thread.find_one_and_update({'_id':self.id}, {'$set':self.info}, upsert=True)
 
     def move(self,board,op_id,new_id):
@@ -210,23 +228,49 @@ class Reply(Reply):
         '''
         assert self.board != board or self.op != op_id, "can't move a reply to his previous thread"
         self.delete()
-        self.__op = op_id
-        self.__board = board
-        self.__id = new_id
+        self._op = op_id
+        self._board = board
+        self._id = new_id
+        self.update_time()
         self.save()
 
     def delete(self):
         '''
         Deletes the entire thread
         '''
-        thread = self.__db.get_collection(self.board+'.'+str(self.op))
-        #thread.delete_one({'_id':self.id})
-        thread.drop()
+        thread = self._db.get_collection(self.board+'.'+str(self.op))
+        thread.delete_one({'_id':self.id})
+        #thread.drop()
         info = {
             'deleted' : True,
             '_id' : self.id
         }
-        self.__db.get_collection(self.board+'.'+str(self.op)).insert_one(info)
+        self._db.get_collection(self.board+'.'+str(self.op)).insert_one(info)
+
+    def load(self):
+        '''
+        Update the instance attributes according to the database
+        '''
+        match = None
+        if self.op:
+            match = self._db.get_collection(self.board+'.'+str(self.op)).find_one({'_id':self.id,'reply':True})
+        else:
+            for thread in filter(lambda x: x.split('.')[0]==self.board,self._db.collection_names()):
+                match = self._db.get_collection(thread).find_one({'_id':self.id,'reply':True})
+                if match:
+                    break
+        if match:
+            self._id = match['_id']
+            self._ip = match['ip']
+            self._board =  match['board']
+            self._time = match['time']
+            self._timestamp = match['timestamp']
+            self._op = match['op']
+            self.content = match.get('content',str())
+            self.image = match.get('image',None)
+            self._name = match.get('name','Anonymous')
+            self.option = match.get('option',None)
+            return True
 
 class Manager:
     '''
