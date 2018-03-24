@@ -4,7 +4,7 @@ from os import path
 setup(
   name = 'milachan',
   packages = ['milachan'],
-  version = '0.3.1',
+  version = '0.3.2',
   description = 'A minimalistic framework for creating simple ImageBoards',
   author = 'Luis Albizo',
   author_email = 'albizo.luis@gmail.com',
